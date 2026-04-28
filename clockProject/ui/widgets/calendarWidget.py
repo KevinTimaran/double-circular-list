@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
@@ -13,7 +11,6 @@ class CalendarWidget(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.currentDateTime = datetime.now()
         self._buildUi()
 
     def _buildUi(self) -> None:
@@ -21,9 +18,7 @@ class CalendarWidget(QWidget):
         self.dateLabel = QLabel("Fecha")
         self.dateLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.dateLabel)
-        self.updateDate(self.currentDateTime)
 
-    def updateDate(self, dateTimeValue: datetime) -> None:
+    def updateDate(self, dateText: str) -> None:
         """Update date label value."""
-        self.currentDateTime = dateTimeValue
-        self.dateLabel.setText(dateTimeValue.strftime("%d/%m/%Y"))
+        self.dateLabel.setText(dateText)

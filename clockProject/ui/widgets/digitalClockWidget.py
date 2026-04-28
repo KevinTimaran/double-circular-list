@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
@@ -13,7 +11,6 @@ class DigitalClockWidget(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.currentDateTime = datetime.now()
         self._buildUi()
 
     def _buildUi(self) -> None:
@@ -22,7 +19,6 @@ class DigitalClockWidget(QWidget):
         self.timeLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.timeLabel)
 
-    def setDateTime(self, dateTimeValue: datetime) -> None:
-        """Update digital display from date/time value."""
-        self.currentDateTime = dateTimeValue
-        self.timeLabel.setText(dateTimeValue.strftime("%H:%M:%S"))
+    def updateTime(self, timeText: str) -> None:
+        """Update the digital display with already formatted time text."""
+        self.timeLabel.setText(timeText)

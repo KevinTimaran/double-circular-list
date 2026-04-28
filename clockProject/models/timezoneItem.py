@@ -9,7 +9,10 @@ from dataclasses import dataclass
 class TimezoneItem:
     """Represents a timezone option in the app."""
 
-    code: str
     cityName: str
-    offsetHours: int
-    offsetMinutes: int = 0
+    timezoneCode: str
+    displayLabel: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.displayLabel:
+            self.displayLabel = f"{self.cityName} / {self.timezoneCode}"

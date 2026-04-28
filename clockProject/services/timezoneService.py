@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from typing import Optional
 
 from dataStructures.doublyCircularList import DoublyCircularList
@@ -11,40 +13,61 @@ from models.timezoneItem import TimezoneItem
 class TimezoneService:
     """Manages timezone data and circular navigation."""
 
-    def __init__(self) -> None:
-        self.timezones: list[TimezoneItem] = []
+    def __init__(self, selectedTimezoneCode: str = "America/Bogota") -> None:
         self.timezoneNavigation: DoublyCircularList[TimezoneItem] = DoublyCircularList()
         self.loadDefaultTimezones()
+        self.setCurrentTimezone(selectedTimezoneCode)
 
     def loadDefaultTimezones(self) -> None:
         """Load an initial set of timezone options."""
+        self.timezoneNavigation = DoublyCircularList()
         defaults = [
-            TimezoneItem(code="UTC", cityName="UTC", offsetHours=0),
-            TimezoneItem(code="COT", cityName="Bogota", offsetHours=-5),
-            TimezoneItem(code="CET", cityName="Madrid", offsetHours=1),
-            TimezoneItem(code="JST", cityName="Tokyo", offsetHours=9),
+            TimezoneItem(cityName="Bogotá", timezoneCode="America/Bogota"),
+            TimezoneItem(cityName="Nueva York", timezoneCode="America/New_York"),
+            TimezoneItem(cityName="Londres", timezoneCode="Europe/London"),
+            TimezoneItem(cityName="Madrid", timezoneCode="Europe/Madrid"),
+            TimezoneItem(cityName="Tokio", timezoneCode="Asia/Tokyo"),
         ]
 
         for timezone in defaults:
-            self.addTimezone(timezone)
-
-    def addTimezone(self, timezoneItem: TimezoneItem) -> None:
-        """Add a new timezone to the service."""
-        self.timezones.append(timezoneItem)
-        self.timezoneNavigation.append(timezoneItem)
+            self.timezoneNavigation.append(timezone)
 
     def getAllTimezones(self) -> list[TimezoneItem]:
         """Return all known timezone items."""
-        return list(self.timezones)
+        return list(self.timezoneNavigation)
 
     def getCurrentTimezone(self) -> Optional[TimezoneItem]:
         """Return the current timezone in navigation cursor."""
         return self.timezoneNavigation.getCurrent()
 
-    def moveToNextTimezone(self) -> Optional[TimezoneItem]:
+    def moveNextTimezone(self) -> Optional[TimezoneItem]:
         """Move to the next timezone in circular order."""
         return self.timezoneNavigation.moveNext()
 
-    def moveToPreviousTimezone(self) -> Optional[TimezoneItem]:
+    def movePreviousTimezone(self) -> Optional[TimezoneItem]:
         """Move to the previous timezone in circular order."""
         return self.timezoneNavigation.movePrevious()
+
+    def setCurrentTimezone(self, timezoneCode: str) -> Optional[TimezoneItem]:
+        """Move the cursor to the timezone with the given code if it exists."""
+        timezones = self.getAllTimezones()
+        for _ in range(len(timezones)):
+            currentTimezone = self.getCurrentTimezone()
+            if currentTimezone is None:
+                break
+            if currentTimezone.timezoneCode == timezoneCode:
+                return currentTimezone
+            self.moveNextTimezone()
+
+        if timezones:
+            return self.getCurrentTimezone()
+
+        return None
+
+    def getCurrentDateTime(self) -> datetime:
+        """Return the current date/time in the active timezone."""
+        currentTimezone = self.getCurrentTimezone()
+        if currentTimezone is None:
+            return datetime.now()
+
+        return datetime.now(ZoneInfo(currentTimezone.timezoneCode))

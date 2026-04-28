@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import time
-
 from PySide6.QtCore import QTime
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -11,6 +9,7 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QFormLayout,
     QLineEdit,
+    QMessageBox,
     QTimeEdit,
     QVBoxLayout,
 )
@@ -19,10 +18,12 @@ from PySide6.QtWidgets import (
 class AlarmDialog(QDialog):
     """Base dialog used to collect alarm information."""
 
-    def __init__(self, parent: QDialog | None = None) -> None:
+    def __init__(self, parent: QDialog | None = None, alarmData: dict | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Configurar alarma")
+        self._alarmData = alarmData or {}
+        self.setWindowTitle("Editar alarma" if self._alarmData else "Configurar alarma")
         self._buildUi()
+        self._loadInitialData()
 
     def _buildUi(self) -> None:
         mainLayout = QVBoxLayout(self)
@@ -30,13 +31,14 @@ class AlarmDialog(QDialog):
 
         self.labelInput = QLineEdit()
         self.timeInput = QTimeEdit()
-        self.timeInput.setDisplayFormat("HH:mm")
+        self.timeInput.setDisplayFormat("hh:mm AP")
         self.timeInput.setTime(QTime.currentTime())
-        self.repeatDailyCheckBox = QCheckBox("Repetir diariamente")
+        self.activeCheckBox = QCheckBox("Activa")
+        self.activeCheckBox.setChecked(True)
 
         formLayout.addRow("Etiqueta:", self.labelInput)
         formLayout.addRow("Hora:", self.timeInput)
-        formLayout.addRow("Repetición:", self.repeatDailyCheckBox)
+        formLayout.addRow("Estado:", self.activeCheckBox)
 
         mainLayout.addLayout(formLayout)
 
@@ -47,8 +49,45 @@ class AlarmDialog(QDialog):
         self.buttonBox.rejected.connect(self.reject)
         mainLayout.addWidget(self.buttonBox)
 
-    def getAlarmData(self) -> tuple[str, time, bool]:
+    def _loadInitialData(self) -> None:
+        """Populate the dialog when editing an existing alarm."""
+        if not self._alarmData:
+            return
+
+        self.labelInput.setText(str(self._alarmData.get("label", "")))
+        hour = int(self._alarmData.get("hour", QTime.currentTime().hour()))
+        minute = int(self._alarmData.get("minute", QTime.currentTime().minute()))
+        self.timeInput.setTime(QTime(hour, minute))
+        self.activeCheckBox.setChecked(bool(self._alarmData.get("enabled", True)))
+
+    def validateInputs(self) -> bool:
+        """Validate the dialog inputs before saving."""
+        hour = self.timeInput.time().hour()
+        minute = self.timeInput.time().minute()
+
+        if hour < 0 or hour > 23:
+            return False
+        if minute < 0 or minute > 59:
+            return False
+        return True
+
+    def getAlarmData(self) -> dict:
         """Return user input data from dialog fields."""
         qtTime = self.timeInput.time()
-        alarmTime = time(hour=qtTime.hour(), minute=qtTime.minute())
-        return self.labelInput.text().strip(), alarmTime, self.repeatDailyCheckBox.isChecked()
+        return {
+            "hour": qtTime.hour(),
+            "minute": qtTime.minute(),
+            "label": self.labelInput.text().strip(),
+            "enabled": self.activeCheckBox.isChecked(),
+        }
+
+    def accept(self) -> None:
+        """Validate input before closing the dialog."""
+        if not self.validateInputs():
+            QMessageBox.warning(
+                self,
+                "Entrada inválida",
+                "Por favor, verifica la hora (00:00 a 23:59).",
+            )
+            return
+        super().accept()

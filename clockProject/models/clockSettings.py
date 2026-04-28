@@ -12,7 +12,11 @@ class ClockSettings:
     """Stores user-configurable settings for the clock application."""
 
     automaticMode: bool = True
+    manualDateTime: Optional[datetime] = None
+    manualStartedAt: Optional[datetime] = None
+    showSeconds: bool = True
     use24HourFormat: bool = True
     selectedThemeId: int = 1
-    selectedTimezoneCode: str = "UTC"
-    manualDateTime: Optional[datetime] = None
+    selectedClockStyleId: int = 1
+    selectedTimezoneCode: str = "America/Bogota"
+    showDateInfo: bool = True
